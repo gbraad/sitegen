@@ -1,0 +1,28 @@
+stages:
+  - compose
+  - documentation
+
+
+build_image:
+  stage: compose
+  image: docker:git
+  services:
+  - docker:dind
+  script:
+    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN registry.gitlab.com
+    - docker build -t registry.gitlab.com/gbraad/sitegen .
+    - docker push registry.gitlab.com/gbraad/sitegen:latest
+  only:
+    - master
+
+pages:
+  stage: documentation
+  image: registry.gitlab.com/gbraad/docugen:latest
+  script:
+  - mkdir public
+  - pandoc -t html5 -f markdown-citations -o public/index.html ./README.md
+  artifacts:
+    paths:
+    - public
+  only:
+  - master
